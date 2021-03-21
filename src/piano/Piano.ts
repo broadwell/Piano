@@ -59,6 +59,7 @@ interface KeyEvent {
 
 interface PedalEvent {
 	time?: Unit.Time;
+	level?: number;
 }
 
 /**
@@ -216,13 +217,13 @@ export class Piano extends ToneAudioNode<PianoOptions> {
 	 *  Put the pedal down at the given time. Causes subsequent
 	 *  notes and currently held notes to sustain.
 	 */
-	pedalDown({ time = this.immediate() }: PedalEvent = {}): this {
+	pedalDown({ level = 0, time = this.immediate() }: PedalEvent = {}): this {
 
 		if (this.loaded) {
 			time = this.toSeconds(time)
-			if (!this._pedal.isDown(time)) {
-				this._pedal.down(time)
-			}
+			//if (!this._pedal.isDown(time)) {
+			this._pedal.down(level, time)
+			//}
 		}
 		return this
 	}
@@ -302,6 +303,14 @@ export class Piano extends ToneAudioNode<PianoOptions> {
 					if (!this._sustainedNotes.has(midi)) {
 						this._sustainedNotes.set(midi, time)
 					}
+
+					if (this._pedal.downLevel(time) < 1) {
+						// Simulate partial sustain pedaling
+						this._strings.triggerRelease(midi, time)
+						const sustainGain = dampenGain * this._pedal.downLevel(time)
+						this._strings.triggerAttack(midi, time, sustainGain)
+					}
+
 				} else {
 					// release the string sound
 					this._strings.triggerRelease(midi, time)

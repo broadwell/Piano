@@ -6,6 +6,8 @@ export class Pedal extends PianoComponent {
 
 	private _downTime: number = Infinity
 
+	private _downLevel: number = 0
+
 	private _currentSound: ToneBufferSource = null
 
 	private _buffers: ToneAudioBuffers
@@ -14,6 +16,7 @@ export class Pedal extends PianoComponent {
 		super(options)
 
 		this._downTime = Infinity
+		this._downLevel = 0
 	}
 
 	protected _internalLoad(): Promise<void> {
@@ -53,9 +56,10 @@ export class Pedal extends PianoComponent {
 	/**
 	 * Put the pedal down
 	 */
-	down(time: number): void {
+	down(level: number, time: number): void {
 		this._squash(time)
 		this._downTime = time
+		this._downLevel = level
 		this._playSample(time, 'down')
 	}
 
@@ -65,6 +69,7 @@ export class Pedal extends PianoComponent {
 	up(time: number): void {
 		this._squash(time)
 		this._downTime = Infinity
+		this._downLevel = 0
 		this._playSample(time, 'up')
 	}
 
@@ -73,5 +78,16 @@ export class Pedal extends PianoComponent {
 	 */
 	isDown(time: number): boolean {
 		return time > this._downTime
+	}
+
+	/**
+	 * Returns how far the pedal is held down at the given time
+	 */
+	downLevel(time: number): number {
+		if (time > this._downTime) {
+			return this._downLevel
+		} else {
+			return 0
+		}
 	}
 }
