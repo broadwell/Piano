@@ -2,6 +2,7 @@ import { Midi } from 'tone'
 import { PianoComponent, PianoComponentOptions } from './Component'
 import { getNotesInRange, velocitiesMap } from './Salamander'
 import { PianoString } from './String'
+import { midiToNote } from './Util'
 
 interface StringsOptions extends PianoComponentOptions {
 	minNote: number
@@ -48,7 +49,7 @@ export class PianoStrings extends PianoComponent {
 		return ((val - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin
 	}
 
-	triggerAttack(note: number, time: number, velocity: number): void {
+	triggerAttack(midi: number, time: number, velocity: number): void {
 		const scaledVel = this.scale(velocity, 0, 1, -0.5, this._strings.length - 0.51)
 		const stringIndex = Math.max(Math.round(scaledVel), 0)
 		let gain = 1 + scaledVel - stringIndex
@@ -57,21 +58,32 @@ export class PianoStrings extends PianoComponent {
 			gain = velocity
 		}
 
+		console.log("TRIGGER ATTACK ON ",midi,"STRING INDEX", stringIndex)
 		const sampler = this._strings[stringIndex]
 
-		if (this._activeNotes.has(note)) {
-			this.triggerRelease(note, time)
+		if (this._activeNotes.has(midi)) {
+			this.triggerRelease(midi, time)
 		}
 
-		this._activeNotes.set(note, sampler)
-		sampler.triggerAttack(Midi(note).toNote(), time, gain)
+		console.log("ATTACK SAMPLER",sampler)
+
+		if (sampler !== undefined) {
+			this._activeNotes.set(midi, sampler)
+			sampler.triggerAttack(midiToNote(midi), time, gain)
+		}
 	}
 
-	triggerRelease(note: number, time: number): void {
+	triggerRelease(midi: number, time: number): void {
+		console.log("TRIGGER RELEASE ON NOTE",midi,"SAMPLE IS",this._activeNotes.get(midi))
+
 		// trigger the release of all of the notes at that velociy
-		if (this._activeNotes.has(note)) {
-			this._activeNotes.get(note).triggerRelease(Midi(note).toNote(), time)
-			this._activeNotes.delete(note)
+		if (this._activeNotes.has(midi)) {
+			const noteSample = this._activeNotes.get(midi)
+			console.log("NOTE SAMPLE", noteSample)
+			if (noteSample !== undefined) {
+				noteSample.triggerRelease(midiToNote(midi), time)
+				this._activeNotes.delete(midi)
+			}
 		}
 	}
 

@@ -56,8 +56,9 @@ export class Pedal extends PianoComponent {
 	/**
 	 * Put the pedal down
 	 */
-	down(level: number, time: number): void {
+	down(time: number, level: number): void {
 		this._squash(time)
+		console.log("PEDAL DOWN LEVEL",level,"TIME",time);
 		this._downTime = time
 		this._downLevel = level
 		this._playSample(time, 'down')
