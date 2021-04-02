@@ -6,7 +6,8 @@
 		"moduleResolution": "node",
 		"sourceMap": false,
 		"declaration": true,
-		"baseUrl": "./"
+		"baseUrl": "./",
+                "rootDir": "./src"
 	},
 	"include": [
 		"./src"
