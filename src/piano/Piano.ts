@@ -296,25 +296,21 @@ export class Piano extends ToneAudioNode<PianoOptions> {
 				// compute the release velocity
 				const holdTime = Math.pow(Math.max(time - prevNote.time, 0.1), 0.7)
 				const prevVel = prevNote.velocity
-				let dampenGain = (3 * holdTime) * prevVel * velocity
+				let dampenGain = (3 / holdTime) * prevVel * velocity
 				dampenGain = Math.max(dampenGain, 0.4)
 				dampenGain = Math.min(dampenGain, 4)
 
 				if (this._pedal.isDown(time)) {
 
-					console.log("PIANO RELEASING HELD KEY WHILE SUSTAIN ON",note,midi)
-					console.log("PIANO PEDAL DOWN LEVEL IS",this._pedal.downLevel(time))
-
 					if (!this._sustainedNotes.has(midi)) {
 						this._sustainedNotes.set(midi, time)
 					}
 
-					if (this._pedal.downLevel(time) < 1) {
+					const pedalLevel = this._pedal.downLevel(time)
+
+					if (pedalLevel < 1) {
 						// Simulate partial sustain pedaling
-						const sustainGain = dampenGain * this._pedal.downLevel(time)
-						console.log("midi",midi,"note",note,"dampenGain",dampenGain,"sustainGain",sustainGain)
-						this._strings.triggerRelease(midi, time)
-						this._strings.triggerAttack(midi, time, sustainGain)
+						this._strings.dampenString(midi, this._pedal.downLevel(time));
 					}
 
 				} else {

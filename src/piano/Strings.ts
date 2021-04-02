@@ -1,4 +1,3 @@
-import { Midi } from 'tone'
 import { PianoComponent, PianoComponentOptions } from './Component'
 import { getNotesInRange, velocitiesMap } from './Salamander'
 import { PianoString } from './String'
@@ -58,14 +57,11 @@ export class PianoStrings extends PianoComponent {
 			gain = velocity
 		}
 
-		console.log("TRIGGER ATTACK ON ",midi,"STRING INDEX", stringIndex)
 		const sampler = this._strings[stringIndex]
 
 		if (this._activeNotes.has(midi)) {
 			this.triggerRelease(midi, time)
 		}
-
-		console.log("ATTACK SAMPLER",sampler)
 
 		if (sampler !== undefined) {
 			this._activeNotes.set(midi, sampler)
@@ -74,16 +70,23 @@ export class PianoStrings extends PianoComponent {
 	}
 
 	triggerRelease(midi: number, time: number): void {
-		console.log("TRIGGER RELEASE ON NOTE",midi,"SAMPLE IS",this._activeNotes.get(midi))
 
 		// trigger the release of all of the notes at that velociy
 		if (this._activeNotes.has(midi)) {
 			const noteSample = this._activeNotes.get(midi)
-			console.log("NOTE SAMPLE", noteSample)
 			if (noteSample !== undefined) {
 				noteSample.triggerRelease(midiToNote(midi), time)
 				this._activeNotes.delete(midi)
 			}
+		}
+	}
+
+	dampenString(midi: number, level: number): void {
+
+		// Simulate partial pedaling
+		let noteString = this._activeNotes.get(midi)
+		if (noteString !== undefined) {
+			noteString.setGain(level)
 		}
 	}
 

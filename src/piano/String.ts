@@ -1,4 +1,5 @@
-import { Sampler, ToneAudioNode } from 'tone'
+import { Sampler, ToneAudioNode, Gain, Volume } from 'tone' //PMB
+import { Tone } from 'tone/build/esm/core/Tone'
 import { PianoComponentOptions, UrlsMap } from './Component'
 import { getNotesUrl } from './Salamander'
 
@@ -16,7 +17,8 @@ export class PianoString extends ToneAudioNode {
 
 	private _sampler: Sampler
 
-	output: Sampler
+	output: Gain
+
 	input: undefined
 
 	private _urls: UrlsMap = {}
@@ -34,7 +36,8 @@ export class PianoString extends ToneAudioNode {
 
 	load(): Promise<void> {
 		return new Promise(onload => {
-			this._sampler = this.output = new Sampler({
+			this.output = new Gain({ context: this.context })
+			this._sampler = new Sampler({
 				attack: 0,
 				baseUrl: this.samples,
 				curve: 'exponential',
@@ -43,14 +46,25 @@ export class PianoString extends ToneAudioNode {
 				urls: this._urls,
 				volume: 3,
 			})
+			this._sampler.connect(this.output)
 		})
 	}
 
 	triggerAttack(note: string, time: number, velocity: number): void {
+
+		// Gain may have been set lower to simulate partial sustain pedaling
+		// This is a good place to reset it -- the damper is always fully
+		// "off" (gain = 1) when a note is struck
+		this.setGain(1)
 		this._sampler.triggerAttack(note, time, velocity)
 	}
 
 	triggerRelease(note: string, time: number): void {
 		this._sampler.triggerRelease(note, time)
 	}
+
+	setGain(level: number): void {
+		this.output.gain.setValueAtTime(level, this.immediate())
+	}
+
 }
