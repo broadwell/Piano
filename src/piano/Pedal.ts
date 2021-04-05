@@ -60,6 +60,7 @@ export class Pedal extends PianoComponent {
 		this._squash(time)
 		this._downTime = time
 		this._downLevel = level
+		// Ideally there would be sample sounds for partial down and up events
 		this._playSample(time, 'down')
 	}
 

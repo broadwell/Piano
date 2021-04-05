@@ -53,9 +53,9 @@ export class PianoString extends ToneAudioNode {
 	triggerAttack(note: string, time: number, velocity: number): void {
 
 		// Gain may have been set lower to simulate partial sustain pedaling
-		// This is a good place to reset it -- the damper is always fully
+		// This may be a good place to reset it -- the damper is always fully
 		// "off" (gain = 1) when a note is struck
-		this.setGain(1)
+		this.setGain(1.0, time)
 		this._sampler.triggerAttack(note, time, velocity)
 	}
 
@@ -63,8 +63,15 @@ export class PianoString extends ToneAudioNode {
 		this._sampler.triggerRelease(note, time)
 	}
 
-	setGain(level: number): void {
-		this.output.gain.setValueAtTime(level, this.immediate())
+	setGain(level: number, time: number = this.immediate()): void {
+		// XXX How long should this take? Note the fadeIn and
+		// fadeOut values used for the Pedal samples, this seems
+		// in that ballpark...
+		// XXX Also, the return to gain = 1.0 for the next attack
+		// probably shouldn't take as long, but returning to 1.0
+		// immedately causes distortion clicks...
+		this.output.gain.linearRampTo(level, .1, time)
+		//}
 	}
 
 }

@@ -214,17 +214,35 @@ export class Piano extends ToneAudioNode<PianoOptions> {
 	}
 
 	/**
-	 *  Put the pedal down at the given time. Causes subsequent
-	 *  notes and currently held notes to sustain.
+	 *  Put the pedal down the given level at the given time. Note that
+	 * 	with partial pedaling, this can signal change in the degree to
+	 *  which the pedal is down (either more or less) -- it's not binary.
+	 *  In general, pressing the pedal causes subsequently released notes
+	 *  to be sustained. But if the pedal is partly released, the gain on
+	 *  all currently sustained notes (keys not currently pressed) must be
+	 *  reduced proportionally but not fully.
+	 *  XXX If the pedal is partly down and is then partially released, what
+	 *  effect should this have on the sound? None? Or does the resonance
+	 *  subtly increase? Not sure how to implement this via the gain nodes.
 	 */
-	pedalDown({ time = this.immediate(), level = 0 }: PedalEvent = {}): this {
+	pedalDown({ time = this.immediate(), level = 1.0 }: PedalEvent = {}): this {
 
 		if (this.loaded) {
 
 			time = this.toSeconds(time)
-			//if (!this._pedal.isDown(time)) {
+			if (this._pedal.isDown(time)) {
+				const currentLevel = this._pedal.downLevel(time)
+				if (level < currentLevel) {
+					this._sustainedNotes.forEach((t, midi) => {
+						if (this._sustainedNotes.has(midi)) {
+							this._strings.dampenString(midi, level)
+						}
+					})
+				} else {
+					// XXX Not sure what to do in this case, if anything...
+				}
+			}
 			this._pedal.down(time, level)
-			//}
 		}
 		return this
 	}
